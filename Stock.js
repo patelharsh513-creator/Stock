@@ -37,7 +37,7 @@ const authService = {
       };
     } catch (error) {
       console.error('Firebase login error:', error);
-      throw error;
+      throw new Error(error.message || 'Failed to log in.'); // Propagate error message
     }
   },
 
@@ -46,7 +46,7 @@ const authService = {
       await signOut(auth);
     } catch (error) {
       console.error('Firebase logout error:', error);
-      throw error;
+      throw new Error(error.message || 'Failed to log out.'); // Propagate error message
     }
   },
 
@@ -92,32 +92,52 @@ const inventoryService = {
   addOrUpdateInventoryItems: async (
     items
   ) => {
-    for (const item of items) {
-      const itemRef = doc(inventoryCollection, String(item.id));
-      await setDoc(itemRef, item, { merge: true });
+    try {
+      for (const item of items) {
+        const itemRef = doc(inventoryCollection, String(item.id));
+        await setDoc(itemRef, item, { merge: true });
+      }
+    } catch (error) {
+      console.error('Firebase addOrUpdateInventoryItems error:', error);
+      throw new Error(error.message || 'Failed to add or update inventory items.');
     }
   },
 
   getInventoryItems: async () => {
-    const snapshot = await getDocs(inventoryCollection);
-    return snapshot.docs.map((doc) => doc.data());
+    try {
+      const snapshot = await getDocs(inventoryCollection);
+      return snapshot.docs.map((doc) => doc.data());
+    } catch (error) {
+      console.error('Firebase getInventoryItems error:', error);
+      throw new Error(error.message || 'Failed to retrieve inventory items.');
+    }
   },
 
   getInventoryItemById: async (id) => {
-    const itemRef = doc(inventoryCollection, String(id));
-    const docSnap = await getDoc(itemRef);
-    if (docSnap.exists()) {
-      return docSnap.data();
+    try {
+      const itemRef = doc(inventoryCollection, String(id));
+      const docSnap = await getDoc(itemRef);
+      if (docSnap.exists()) {
+        return docSnap.data();
+      }
+      return null;
+    } catch (error) {
+      console.error('Firebase getInventoryItemById error:', error);
+      throw new Error(error.message || `Failed to retrieve inventory item with ID: ${id}.`);
     }
-    return null;
   },
 
   updateInventoryItemQuantity: async (
     id,
     newQuantity
   ) => {
-    const itemRef = doc(inventoryCollection, String(id));
-    await updateDoc(itemRef, { quantity: String(newQuantity) }); // Store as string as per JSON structure
+    try {
+      const itemRef = doc(inventoryCollection, String(id));
+      await updateDoc(itemRef, { quantity: String(newQuantity) }); // Store as string as per JSON structure
+    } catch (error) {
+      console.error('Firebase updateInventoryItemQuantity error:', error);
+      throw new Error(error.message || `Failed to update quantity for item with ID: ${id}.`);
+    }
   },
 
   // Update multiple fields for an inventory item
@@ -125,13 +145,23 @@ const inventoryService = {
     id,
     updates
   ) => {
-    const itemRef = doc(inventoryCollection, String(id));
-    await updateDoc(itemRef, updates);
+    try {
+      const itemRef = doc(inventoryCollection, String(id));
+      await updateDoc(itemRef, updates);
+    } catch (error) {
+      console.error('Firebase updateInventoryItem error:', error);
+      throw new Error(error.message || `Failed to update item with ID: ${id}.`);
+    }
   },
 
   deleteInventoryItem: async (id) => {
-    const itemRef = doc(inventoryCollection, String(id));
-    await deleteDoc(itemRef);
+    try {
+      const itemRef = doc(inventoryCollection, String(id));
+      await deleteDoc(itemRef);
+    } catch (error) {
+      console.error('Firebase deleteInventoryItem error:', error);
+      throw new Error(error.message || `Failed to delete item with ID: ${id}.`);
+    }
   },
 
   importInventoryJson: async (jsonString) => {
@@ -141,7 +171,7 @@ const inventoryService = {
       await inventoryService.addOrUpdateInventoryItems(parsedItems);
     } catch (error) {
       console.error('Error importing inventory JSON:', error);
-      throw new Error('Failed to import inventory. Check JSON format.');
+      throw new Error(error.message || 'Failed to import inventory. Check JSON format and permissions.');
     }
   },
 };
@@ -164,29 +194,49 @@ const parseDishJson = (jsonData) => {
 
 const dishService = {
   addOrUpdateDishes: async (dishes) => {
-    for (const dish of dishes) {
-      const dishRef = doc(dishesCollection, dish.id);
-      await setDoc(dishRef, dish, { merge: true });
+    try {
+      for (const dish of dishes) {
+        const dishRef = doc(dishesCollection, dish.id);
+        await setDoc(dishRef, dish, { merge: true });
+      }
+    } catch (error) {
+      console.error('Firebase addOrUpdateDishes error:', error);
+      throw new Error(error.message || 'Failed to add or update dishes.');
     }
   },
 
   getDishes: async () => {
-    const snapshot = await getDocs(dishesCollection);
-    return snapshot.docs.map((doc) => doc.data());
+    try {
+      const snapshot = await getDocs(dishesCollection);
+      return snapshot.docs.map((doc) => doc.data());
+    } catch (error) {
+      console.error('Firebase getDishes error:', error);
+      throw new Error(error.message || 'Failed to retrieve dishes.');
+    }
   },
 
   getDishById: async (id) => {
-    const dishRef = doc(dishesCollection, id);
-    const docSnap = await getDoc(dishRef);
-    if (docSnap.exists()) {
-      return docSnap.data();
+    try {
+      const dishRef = doc(dishesCollection, id);
+      const docSnap = await getDoc(dishRef);
+      if (docSnap.exists()) {
+        return docSnap.data();
+      }
+      return null;
+    } catch (error) {
+      console.error('Firebase getDishById error:', error);
+      throw new Error(error.message || `Failed to retrieve dish with ID: ${id}.`);
     }
-    return null;
   },
 
   deleteDish: async (id) => {
-    const dishRef = doc(dishesCollection, id);
-    await deleteDoc(dishRef);
+    try {
+      const dishRef = doc(dishesCollection, id);
+      await deleteDoc(dishRef);
+    } catch (error) {
+      console.error('Firebase deleteDish error:', error);
+      throw new Error(error.message || `Failed to delete dish with ID: ${id}.`);
+    }
   },
 
   importDishJson: async (jsonString) => {
@@ -200,7 +250,7 @@ const dishService = {
       await dishService.addOrUpdateDishes(parsedDishes);
     } catch (error) {
       console.error('Error importing dish JSON:', error);
-      throw new Error('Failed to import dishes. Check JSON format.');
+      throw new Error(error.message || 'Failed to import dishes. Check JSON format and permissions.');
     }
   },
 
@@ -208,30 +258,35 @@ const dishService = {
   getFlattenedIngredientsForDish: async (
     dishId
   ) => {
-    const dish = await dishService.getDishById(dishId);
-    if (!dish) {
-      return new Map();
-    }
-
-    const flattened = new Map(); // ingredient.id -> DishIngredient (with aggregated amount)
-    const processIngredients = (ingredients) => {
-      for (const item of ingredients) {
-        if (item.subRecipe) {
-          processIngredients(item.subRecipe.ingredients);
-        } else if (item.ingredient) {
-          // Use item.ingredient.id for lookup, assuming it corresponds to InventoryItem.ingredient_id
-          const ingredientIdentifier = item.ingredient.id;
-          const currentAmount = flattened.get(ingredientIdentifier)?.amount || 0;
-          flattened.set(ingredientIdentifier, {
-            ...item,
-            amount: currentAmount + item.amount,
-          });
-        }
+    try {
+      const dish = await dishService.getDishById(dishId);
+      if (!dish) {
+        return new Map();
       }
-    };
 
-    processIngredients(dish.ingredients);
-    return flattened;
+      const flattened = new Map(); // ingredient.id -> DishIngredient (with aggregated amount)
+      const processIngredients = (ingredients) => {
+        for (const item of ingredients) {
+          if (item.subRecipe) {
+            processIngredients(item.subRecipe.ingredients);
+          } else if (item.ingredient) {
+            // Use item.ingredient.id for lookup, assuming it corresponds to InventoryItem.ingredient_id
+            const ingredientIdentifier = item.ingredient.id;
+            const currentAmount = flattened.get(ingredientIdentifier)?.amount || 0;
+            flattened.set(ingredientIdentifier, {
+              ...item,
+              amount: currentAmount + item.amount,
+            });
+          }
+        }
+      };
+
+      processIngredients(dish.ingredients);
+      return flattened;
+    } catch (error) {
+      console.error('Firebase getFlattenedIngredientsForDish error:', error);
+      throw new Error(error.message || `Failed to get ingredients for dish with ID: ${dishId}.`);
+    }
   },
 };
 
@@ -240,55 +295,85 @@ const weeklyMenusCollection = collection(db, 'weeklyMenus');
 
 const weeklyMenuService = {
   addWeeklyMenu: async (menu) => {
-    const newMenuRef = doc(weeklyMenusCollection);
-    const menuWithTimestamps = {
-      ...menu,
-      id: newMenuRef.id,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    };
-    await setDoc(newMenuRef, menuWithTimestamps);
-    return newMenuRef.id;
+    try {
+      const newMenuRef = doc(weeklyMenusCollection);
+      const menuWithTimestamps = {
+        ...menu,
+        id: newMenuRef.id,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+      await setDoc(newMenuRef, menuWithTimestamps);
+      return newMenuRef.id;
+    } catch (error) {
+      console.error('Firebase addWeeklyMenu error:', error);
+      throw new Error(error.message || 'Failed to add weekly menu.');
+    }
   },
 
   getWeeklyMenus: async () => {
-    const snapshot = await getDocs(weeklyMenusCollection);
-    return snapshot.docs.map((doc) => doc.data());
+    try {
+      const snapshot = await getDocs(weeklyMenusCollection);
+      return snapshot.docs.map((doc) => doc.data());
+    } catch (error) {
+      console.error('Firebase getWeeklyMenus error:', error);
+      throw new Error(error.message || 'Failed to retrieve weekly menus.');
+    }
   },
 
   getWeeklyMenuById: async (id) => {
-    const docSnap = await getDoc(doc(weeklyMenusCollection, id));
-    if (docSnap.exists()) {
-      return docSnap.data();
+    try {
+      const docSnap = await getDoc(doc(weeklyMenusCollection, id));
+      if (docSnap.exists()) {
+        return docSnap.data();
+      }
+      return null;
+    } catch (error) {
+      console.error('Firebase getWeeklyMenuById error:', error);
+      throw new Error(error.message || `Failed to retrieve weekly menu with ID: ${id}.`);
     }
-    return null;
   },
 
   getWeeklyMenuForDate: async (date) => {
-    const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
-    const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+    try {
+      const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+      const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
 
-    const q = query(
-      weeklyMenusCollection,
-      where('startDate', '<=', Timestamp.fromDate(endOfDay)),
-      where('endDate', '>=', Timestamp.fromDate(startOfDay))
-    );
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      // Assuming only one menu active per date
-      return querySnapshot.docs[0].data();
+      const q = query(
+        weeklyMenusCollection,
+        where('startDate', '<=', Timestamp.fromDate(endOfDay)),
+        where('endDate', '>=', Timestamp.fromDate(startOfDay))
+      );
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        // Assuming only one menu active per date
+        return querySnapshot.docs[0].data();
+      }
+      return null;
+    } catch (error) {
+      console.error('Firebase getWeeklyMenuForDate error:', error);
+      throw new Error(error.message || `Failed to retrieve weekly menu for date: ${date.toDateString()}.`);
     }
-    return null;
   },
 
   updateWeeklyMenu: async (id, updates) => {
-    const menuRef = doc(weeklyMenusCollection, id);
-    await updateDoc(menuRef, { ...updates, updatedAt: Timestamp.now() });
+    try {
+      const menuRef = doc(weeklyMenusCollection, id);
+      await updateDoc(menuRef, { ...updates, updatedAt: Timestamp.now() });
+    } catch (error) {
+      console.error('Firebase updateWeeklyMenu error:', error);
+      throw new Error(error.message || `Failed to update weekly menu with ID: ${id}.`);
+    }
   },
 
   deleteWeeklyMenu: async (id) => {
-    const menuRef = doc(weeklyMenusCollection, id);
-    await deleteDoc(menuRef);
+    try {
+      const menuRef = doc(weeklyMenusCollection, id);
+      await deleteDoc(menuRef);
+    } catch (error) {
+      console.error('Firebase deleteWeeklyMenu error:', error);
+      throw new Error(error.message || `Failed to delete weekly menu with ID: ${id}.`);
+    }
   },
 };
 
@@ -297,46 +382,71 @@ const dailyOrdersCollection = collection(db, 'dailyOrders');
 
 const dailyOrderService = {
   addDailyOrder: async (order) => {
-    const newOrderRef = doc(dailyOrdersCollection);
-    const orderWithTimestamps = {
-      ...order,
-      id: newOrderRef.id,
-      createdAt: Timestamp.now(),
-    };
-    await setDoc(newOrderRef, orderWithTimestamps);
-    return newOrderRef.id;
+    try {
+      const newOrderRef = doc(dailyOrdersCollection);
+      const orderWithTimestamps = {
+        ...order,
+        id: newOrderRef.id,
+        createdAt: Timestamp.now(),
+      };
+      await setDoc(newOrderRef, orderWithTimestamps);
+      return newOrderRef.id;
+    } catch (error) {
+      console.error('Firebase addDailyOrder error:', error);
+      throw new Error(error.message || 'Failed to add daily order.');
+    }
   },
 
   getDailyOrders: async () => {
-    const snapshot = await getDocs(dailyOrdersCollection);
-    return snapshot.docs.map((doc) => doc.data());
+    try {
+      const snapshot = await getDocs(dailyOrdersCollection);
+      return snapshot.docs.map((doc) => doc.data());
+    } catch (error) {
+      console.error('Firebase getDailyOrders error:', error);
+      throw new Error(error.message || 'Failed to retrieve daily orders.');
+    }
   },
 
   getDailyOrderForDateAndMenu: async (date, menuId) => {
-    const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
-    const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+    try {
+      const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+      const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
 
-    const q = query(
-      dailyOrdersCollection,
-      where('date', '>=', Timestamp.fromDate(startOfDay)),
-      where('date', '<=', Timestamp.fromDate(endOfDay)),
-      where('menuId', '==', menuId)
-    );
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      return querySnapshot.docs[0].data();
+      const q = query(
+        dailyOrdersCollection,
+        where('date', '>=', Timestamp.fromDate(startOfDay)),
+        where('date', '<=', Timestamp.fromDate(endOfDay)),
+        where('menuId', '==', menuId)
+      );
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        return querySnapshot.docs[0].data();
+      }
+      return null;
+    } catch (error) {
+      console.error('Firebase getDailyOrderForDateAndMenu error:', error);
+      throw new Error(error.message || `Failed to retrieve daily order for date: ${date.toDateString()} and menu ID: ${menuId}.`);
     }
-    return null;
   },
 
   updateDailyOrder: async (id, updates) => {
-    const orderRef = doc(dailyOrdersCollection, id);
-    await updateDoc(orderRef, updates);
+    try {
+      const orderRef = doc(dailyOrdersCollection, id);
+      await updateDoc(orderRef, updates);
+    } catch (error) {
+      console.error('Firebase updateDailyOrder error:', error);
+      throw new Error(error.message || `Failed to update daily order with ID: ${id}.`);
+    }
   },
 
   deleteDailyOrder: async (id) => {
-    const orderRef = doc(dailyOrdersCollection, id);
-    await deleteDoc(orderRef);
+    try {
+      const orderRef = doc(dailyOrdersCollection, id);
+      await deleteDoc(orderRef);
+    } catch (error) {
+      console.error('Firebase deleteDailyOrder error:', error);
+      throw new Error(error.message || `Failed to delete daily order with ID: ${id}.`);
+    }
   },
 };
 
@@ -347,22 +457,27 @@ const calculationService = {
     dailyOrders,
     dishes
   ) => {
-    const aggregatedRequirements = new Map(); // ingredient.id -> total amount needed
+    try {
+      const aggregatedRequirements = new Map(); // ingredient.id -> total amount needed
 
-    for (const order of dailyOrders) {
-      for (const dailyDishOrder of order.dishOrders) {
-        const dish = dishes.find((d) => d.id === dailyDishOrder.dishId);
-        if (dish) {
-          const flattenedIngredients = await dishService.getFlattenedIngredientsForDish(dish.id);
-          flattenedIngredients.forEach((ingredient, ingredientId) => {
-            const totalAmountNeeded = ingredient.amount * dailyDishOrder.orderedQuantity;
-            const currentAggregated = aggregatedRequirements.get(ingredientId) || 0;
-            aggregatedRequirements.set(ingredientId, currentAggregated + totalAmountNeeded);
-          });
+      for (const order of dailyOrders) {
+        for (const dailyDishOrder of order.dishOrders) {
+          const dish = dishes.find((d) => d.id === dailyDishOrder.dishId);
+          if (dish) {
+            const flattenedIngredients = await dishService.getFlattenedIngredientsForDish(dish.id);
+            flattenedIngredients.forEach((ingredient, ingredientId) => {
+              const totalAmountNeeded = ingredient.amount * dailyDishOrder.orderedQuantity;
+              const currentAggregated = aggregatedRequirements.get(ingredientId) || 0;
+              aggregatedRequirements.set(ingredientId, currentAggregated + totalAmountNeeded);
+            });
+          }
         }
       }
+      return aggregatedRequirements;
+    } catch (error) {
+      console.error('Firebase getAggregatedIngredientRequirements error:', error);
+      throw new Error(error.message || 'Failed to aggregate ingredient requirements.');
     }
-    return aggregatedRequirements;
   },
 
   // Determines what needs to be ordered to meet forecasted demand and thresholds
@@ -370,49 +485,54 @@ const calculationService = {
     aggregatedRequirements,
     currentInventory
   ) => {
-    const suggestions = [];
+    try {
+      const suggestions = [];
 
-    for (const [ingredientId, requiredAmount] of aggregatedRequirements.entries()) {
-      const inventoryItem = currentInventory.find(item => item.ingredient_id === Number(ingredientId) || item.id === Number(ingredientId));
+      for (const [ingredientId, requiredAmount] of aggregatedRequirements.entries()) {
+        const inventoryItem = currentInventory.find(item => item.ingredient_id === Number(ingredientId) || item.id === Number(ingredientId));
 
-      if (inventoryItem) {
-        const currentStockNum = parseFloat(inventoryItem.quantity || '0');
-        const minThresholdNum = parseFloat(inventoryItem.minimum_quantity_required || '0');
-        
-        let toOrder = 0;
-        // If current stock + outstanding orders is less than required, order the difference
-        // Also consider bringing stock up to at least the minimum threshold
-        const buffer = minThresholdNum > requiredAmount ? minThresholdNum : requiredAmount; // Ensure we order at least up to threshold or immediate need
+        if (inventoryItem) {
+          const currentStockNum = parseFloat(inventoryItem.quantity || '0');
+          const minThresholdNum = parseFloat(inventoryItem.minimum_quantity_required || '0');
+          
+          let toOrder = 0;
+          // If current stock + outstanding orders is less than required, order the difference
+          // Also consider bringing stock up to at least the minimum threshold
+          const buffer = minThresholdNum > requiredAmount ? minThresholdNum : requiredAmount; // Ensure we order at least up to threshold or immediate need
 
-        if (currentStockNum < buffer) {
-          toOrder = buffer - currentStockNum;
-        }
+          if (currentStockNum < buffer) {
+            toOrder = buffer - currentStockNum;
+          }
 
-        if (toOrder > 0) {
+          if (toOrder > 0) {
+            suggestions.push({
+              ingredientId: String(inventoryItem.id), // Use inventory item's ID for linking
+              ingredientName: inventoryItem.name,
+              currentStock: currentStockNum,
+              requiredAmount: requiredAmount,
+              toOrder: toOrder,
+              unit: (inventoryItem.package_description && inventoryItem.package_description.split(' ')[1]) || 'units' // Attempt to extract unit
+            });
+          }
+        } else {
+          // Ingredient in dish not found in inventory - needs to be ordered
+          // This is a simplified approach, may need more info on default order quantities
+          const genericUnit = 'units'; // Default unit if not found
           suggestions.push({
-            ingredientId: String(inventoryItem.id), // Use inventory item's ID for linking
-            ingredientName: inventoryItem.name,
-            currentStock: currentStockNum,
+            ingredientId: ingredientId,
+            ingredientName: `Unknown Ingredient (ID: ${ingredientId})`, // Placeholder name
+            currentStock: 0,
             requiredAmount: requiredAmount,
-            toOrder: toOrder,
-            unit: (inventoryItem.package_description && inventoryItem.package_description.split(' ')[1]) || 'units' // Attempt to extract unit
+            toOrder: requiredAmount,
+            unit: genericUnit
           });
         }
-      } else {
-        // Ingredient in dish not found in inventory - needs to be ordered
-        // This is a simplified approach, may need more info on default order quantities
-        const genericUnit = 'units'; // Default unit if not found
-        suggestions.push({
-          ingredientId: ingredientId,
-          ingredientName: `Unknown Ingredient (ID: ${ingredientId})`, // Placeholder name
-          currentStock: 0,
-          requiredAmount: requiredAmount,
-          toOrder: requiredAmount,
-          unit: genericUnit
-        });
       }
+      return suggestions;
+    } catch (error) {
+      console.error('Firebase getForecastOrderSuggestions error:', error);
+      throw new Error(error.message || 'Failed to generate forecast order suggestions.');
     }
-    return suggestions;
   },
 };
 
@@ -939,7 +1059,7 @@ const DashboardPage = (container) => {
   const cardsData = [
     { title: 'Manage Menu', description: 'Plan and update your weekly menu.', link: '#/menu-management', icon: '🍽️' },
     { title: 'Enter Orders', description: 'Log daily orders from your kitchen team.', link: '#/order-entry', icon: '📝' },
-    { title: 'Low Stock Alerts', description: 'View ingredients running low.', link: '#/low-stock', icon: '⚠️' },
+    { title: 'Low Stock', description: 'View ingredients running low.', link: '#/low-stock', icon: '⚠️' },
     { title: 'Forecasting', description: 'Predict ingredient needs for future weeks.', link: '#/forecasting', icon: '📈' },
     { title: 'Settings & Import', description: 'Update inventory and dish data.', link: '#/settings', icon: '⚙️' },
   ];
@@ -1017,6 +1137,11 @@ const ForecastingPage = (container) => {
     h1.className = 'text-4xl font-bold text-gray-900 mb-6 text-center';
     h1.textContent = 'Ingredient Forecasting';
     pageDiv.appendChild(h1);
+
+    const introP = document.createElement('p');
+    introP.className = 'text-lg text-gray-700 mb-8 text-center max-w-2xl mx-auto';
+    introP.textContent = 'Select a weekly menu and generate a forecast of ingredient needs based on historical orders to proactively manage your stock.';
+    pageDiv.appendChild(introP);
 
     const controlsDiv = document.createElement('div');
     controlsDiv.className = 'mb-6 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4';
@@ -1151,7 +1276,7 @@ const ForecastingPage = (container) => {
       }
     } catch (err) {
       console.error('Error fetching data for forecasting:', err);
-      error = 'Failed to load data for forecasting.';
+      error = err.message || 'Failed to load data for forecasting.';
     } finally {
       loading = false;
       await calculateForecast(); // Calculate forecast after fetching all data and setting selectedMenuId
@@ -1190,7 +1315,7 @@ const ForecastingPage = (container) => {
       forecastResults = suggestions;
     } catch (err) {
       console.error('Error calculating forecast:', err);
-      error = 'Failed to calculate forecast. Please try again.';
+      error = err.message || 'Failed to calculate forecast. Please try again.';
       forecastResults = [];
     } finally {
       loading = false;
@@ -1341,7 +1466,7 @@ const LowStockPage = (container) => {
       lowStockItems = filtered;
     } catch (err) {
       console.error('Error fetching low stock items:', err);
-      error = 'Failed to load low stock items.';
+      error = err.message || 'Failed to load low stock items.';
     } finally {
       loading = false;
       renderPage(); // Re-render with data or error
@@ -1430,16 +1555,35 @@ const LoginPage = (container) => {
     try {
       await authManager.login(email, password);
       // AuthManager's onAuthStateChanged will handle redirection
-    } catch (error) {
-      console.error('Login failed:', error);
-      if (error.code === 'auth/invalid-email') {
-        loginError = 'Invalid email address format.';
-      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        loginError = 'Invalid credentials. Please check your email and password.';
-      } else if (error.code === 'auth/too-many-requests') {
-        loginError = 'Too many failed login attempts. Please try again later.';
+    } catch (err) {
+      console.error('Login failed:', err);
+      // Firebase specific error codes for more user-friendly messages
+      if (err.code && err.code.startsWith('auth/')) {
+        switch (err.code) {
+          case 'auth/invalid-email':
+            loginError = 'Invalid email address format.';
+            break;
+          case 'auth/user-not-found':
+            loginError = 'No user found with this email.';
+            break;
+          case 'auth/wrong-password':
+            loginError = 'Invalid password.';
+            break;
+          case 'auth/invalid-credential':
+            loginError = 'Invalid credentials. Please check your email and password.';
+            break;
+          case 'auth/user-disabled':
+            loginError = 'This user account has been disabled.';
+            break;
+          case 'auth/too-many-requests':
+            loginError = 'Too many failed login attempts. Access to this account has been temporarily disabled. Try again later.';
+            break;
+          default:
+            loginError = err.message || 'An unknown authentication error occurred.';
+            break;
+        }
       } else {
-        loginError = 'Failed to log in. Please try again.';
+        loginError = err.message || 'Failed to log in. Please try again.';
       }
     } finally {
       loading = false; // Reset local loading state
@@ -1473,6 +1617,97 @@ const MenuManagementPage = (container) => {
   let newMenuEndDate = '';
   let selectedDishesForNewMenu = [];
   let filterText = '';
+
+  const formatDate = (timestamp) => {
+    return timestamp.toDate().toLocaleDateString();
+  };
+
+  const renderDishSelection = () => {
+    const dishGridContainer = container.querySelector('.dish-grid-container'); // Select by class
+    if (!dishGridContainer) return;
+
+    dishGridContainer.innerHTML = ''; // Clear existing dishes
+
+    const filteredDishes = allDishes.filter(dish =>
+      dish.variantName.toLowerCase().includes(filterText.toLowerCase()) ||
+      dish.category.name.toLowerCase().includes(filterText.toLowerCase()) ||
+      dish.diet.toLowerCase().includes(filterText.toLowerCase())
+    );
+
+    if (filteredDishes.length > 0) {
+      filteredDishes.forEach(dish => {
+        const dishCardWrapper = document.createElement('div');
+        dishCardWrapper.className = `border rounded-lg overflow-hidden transition-all duration-200 ${
+          selectedDishesForNewMenu.includes(dish.id)
+            ? 'border-blue-500 shadow-lg bg-blue-50'
+            : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+        }`;
+        dishCardWrapper.addEventListener('click', () => handleDishSelectionToggle(dish.id));
+
+        const innerCard = document.createElement('div');
+        innerCard.className = 'cursor-pointer p-4 flex flex-col h-full';
+        dishCardWrapper.appendChild(innerCard);
+
+        const dishHeader = document.createElement('div');
+        dishHeader.className = 'flex items-start mb-3';
+        innerCard.appendChild(dishHeader);
+
+        const img = document.createElement('img');
+        img.src = dish.webUrl || `https://picsum.photos/100/100?random=${dish.id}`;
+        img.alt = dish.variantName;
+        img.className = 'w-20 h-20 object-cover rounded-md mr-4 flex-shrink-0';
+        dishHeader.appendChild(img);
+
+        const textContent = document.createElement('div');
+        textContent.className = 'flex-grow';
+        dishHeader.appendChild(textContent);
+
+        const h3 = document.createElement('h3');
+        h3.className = 'text-lg font-semibold text-gray-800';
+        h3.textContent = dish.variantName;
+        textContent.appendChild(h3);
+
+        const pCategory = document.createElement('p');
+        pCategory.className = 'text-sm text-gray-600';
+        pCategory.innerHTML = `${dish.category.name} <span class="font-medium ${dish.diet === 'vegan' ? 'text-green-600' : dish.diet === 'vegetarian' ? 'text-yellow-600' : 'text-red-600'}">(${dish.diet})</span>`;
+        textContent.appendChild(pCategory);
+
+        const pType = document.createElement('p');
+        pType.className = 'text-xs text-gray-500';
+        pType.textContent = `Type: ${dish.type}`;
+        textContent.appendChild(pType);
+
+        const footer = document.createElement('div');
+        footer.className = 'flex justify-end mt-auto pt-2';
+        innerCard.appendChild(footer);
+
+        const statusSpan = document.createElement('span');
+        statusSpan.className = `px-3 py-1 text-sm font-medium rounded-full ${
+          selectedDishesForNewMenu.includes(dish.id)
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-200 text-gray-700'
+        }`;
+        statusSpan.textContent = selectedDishesForNewMenu.includes(dish.id) ? 'Selected' : 'Select';
+        footer.appendChild(statusSpan);
+
+        dishGridContainer.appendChild(dishCardWrapper);
+      });
+    } else {
+      const p = document.createElement('p');
+      p.className = 'text-center text-gray-600 col-span-full';
+      p.textContent = 'No dishes available. Please import dishes from settings.';
+      dishGridContainer.appendChild(p);
+    }
+  };
+
+  const handleDishSelectionToggle = (dishId) => {
+    if (selectedDishesForNewMenu.includes(dishId)) {
+      selectedDishesForNewMenu = selectedDishesForNewMenu.filter((id) => id !== dishId);
+    } else {
+      selectedDishesForNewMenu = [...selectedDishesForNewMenu, dishId];
+    }
+    renderDishSelection(); // Re-render only dish selection section
+  };
 
   const renderPage = () => {
     container.innerHTML = ''; // Clear previous content
@@ -1610,83 +1845,9 @@ const MenuManagementPage = (container) => {
     pageDiv.appendChild(filterInput);
 
     const dishGridContainer = document.createElement('div');
-    dishGridContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+    dishGridContainer.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 dish-grid-container'; // Added class for easier targeting
     pageDiv.appendChild(dishGridContainer);
 
-    const renderDishSelection = () => {
-      dishGridContainer.innerHTML = ''; // Clear existing dishes
-
-      const filteredDishes = allDishes.filter(dish =>
-        dish.variantName.toLowerCase().includes(filterText.toLowerCase()) ||
-        dish.category.name.toLowerCase().includes(filterText.toLowerCase()) ||
-        dish.diet.toLowerCase().includes(filterText.toLowerCase())
-      );
-
-      if (filteredDishes.length > 0) {
-        filteredDishes.forEach(dish => {
-          const dishCardWrapper = document.createElement('div');
-          dishCardWrapper.className = `border rounded-lg overflow-hidden transition-all duration-200 ${
-            selectedDishesForNewMenu.includes(dish.id)
-              ? 'border-blue-500 shadow-lg bg-blue-50'
-              : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
-          }`;
-          dishCardWrapper.addEventListener('click', () => handleDishSelectionToggle(dish.id));
-
-          const innerCard = document.createElement('div');
-          innerCard.className = 'cursor-pointer p-4 flex flex-col h-full';
-          dishCardWrapper.appendChild(innerCard);
-
-          const dishHeader = document.createElement('div');
-          dishHeader.className = 'flex items-start mb-3';
-          innerCard.appendChild(dishHeader);
-
-          const img = document.createElement('img');
-          img.src = dish.webUrl || `https://picsum.photos/100/100?random=${dish.id}`;
-          img.alt = dish.variantName;
-          img.className = 'w-20 h-20 object-cover rounded-md mr-4 flex-shrink-0';
-          dishHeader.appendChild(img);
-
-          const textContent = document.createElement('div');
-          textContent.className = 'flex-grow';
-          dishHeader.appendChild(textContent);
-
-          const h3 = document.createElement('h3');
-          h3.className = 'text-lg font-semibold text-gray-800';
-          h3.textContent = dish.variantName;
-          textContent.appendChild(h3);
-
-          const pCategory = document.createElement('p');
-          pCategory.className = 'text-sm text-gray-600';
-          pCategory.innerHTML = `${dish.category.name} <span class="font-medium ${dish.diet === 'vegan' ? 'text-green-600' : dish.diet === 'vegetarian' ? 'text-yellow-600' : 'text-red-600'}">(${dish.diet})</span>`;
-          textContent.appendChild(pCategory);
-
-          const pType = document.createElement('p');
-          pType.className = 'text-xs text-gray-500';
-          pType.textContent = `Type: ${dish.type}`;
-          textContent.appendChild(pType);
-
-          const footer = document.createElement('div');
-          footer.className = 'flex justify-end mt-auto pt-2';
-          innerCard.appendChild(footer);
-
-          const statusSpan = document.createElement('span');
-          statusSpan.className = `px-3 py-1 text-sm font-medium rounded-full ${
-            selectedDishesForNewMenu.includes(dish.id)
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700'
-          }`;
-          statusSpan.textContent = selectedDishesForNewMenu.includes(dish.id) ? 'Selected' : 'Select';
-          footer.appendChild(statusSpan);
-
-          dishGridContainer.appendChild(dishCardWrapper);
-        });
-      } else {
-        const p = document.createElement('p');
-        p.className = 'text-center text-gray-600 col-span-full';
-        p.textContent = 'No dishes available. Please import dishes from settings.';
-        dishGridContainer.appendChild(p);
-      }
-    };
     renderDishSelection(); // Initial dish selection render
 
     // Selected Menu Details (Optional - to display the currently selected menu's dishes)
@@ -1752,7 +1913,7 @@ const MenuManagementPage = (container) => {
       }
     } catch (err) {
       console.error('Error fetching data for menu management:', err);
-      error = 'Failed to load dishes or menus.';
+      error = err.message || 'Failed to load dishes or menus.';
     } finally {
       loading = false;
       renderPage();
@@ -1778,10 +1939,10 @@ const MenuManagementPage = (container) => {
 
       if (selectedWeeklyMenu && selectedWeeklyMenu.id) {
         await weeklyMenuService.updateWeeklyMenu(selectedWeeklyMenu.id, menuData);
-        alert('Weekly menu updated successfully!');
+        message = 'Weekly menu updated successfully!';
       } else {
         await weeklyMenuService.addWeeklyMenu(menuData);
-        alert('Weekly menu created successfully!');
+        message = 'Weekly menu created successfully!';
       }
 
       // Clear form and re-fetch data
@@ -1797,15 +1958,6 @@ const MenuManagementPage = (container) => {
       loading = false;
       renderPage(); // Re-render with updated data or error
     }
-  };
-
-  const handleDishSelectionToggle = (dishId) => {
-    if (selectedDishesForNewMenu.includes(dishId)) {
-      selectedDishesForNewMenu = selectedDishesForNewMenu.filter((id) => id !== dishId);
-    } else {
-      selectedDishesForNewMenu = [...selectedDishesForNewMenu, dishId];
-    }
-    renderDishSelection(); // Re-render only dish selection section
   };
 
   const handleSelectExistingMenu = (menuId) => {
@@ -1824,10 +1976,6 @@ const MenuManagementPage = (container) => {
       selectedDishesForNewMenu = [];
     }
     renderPage(); // Re-render entire page to reflect menu change
-  };
-
-  const formatDate = (timestamp) => {
-    return timestamp.toDate().toLocaleDateString();
   };
 
   fetchData(); // Initial data fetch and render
@@ -1968,7 +2116,6 @@ const OrderEntryPage = (container) => {
     } else {
       const pSelectDate = document.createElement('p');
       pSelectDate.className = 'text-center text-gray-600 mt-8';
-      pSelectDate.textContent = 'Select a date to view and enter orders.';
       pageDiv.appendChild(pSelectDate);
     }
   };
@@ -1983,7 +2130,7 @@ const OrderEntryPage = (container) => {
       allDishes = await dishService.getDishes();
     } catch (err) {
       console.error('Error fetching initial data:', err);
-      error = 'Failed to load initial data.';
+      error = err.message || 'Failed to load initial data.';
     } finally {
       loading = false;
       await loadMenuAndOrdersForDate(); // Load menu and orders after initial data
@@ -2028,7 +2175,7 @@ const OrderEntryPage = (container) => {
       }
     } catch (err) {
       console.error('Error loading menu or orders for date:', err);
-      error = 'Failed to load menu or daily orders for the selected date.';
+      error = err.message || 'Failed to load menu or daily orders for the selected date.';
     } finally {
       loading = false;
       renderPage(); // Re-render with data or error
@@ -2380,7 +2527,7 @@ const SettingsPage = (container) => {
       inventoryItems = await inventoryService.getInventoryItems();
     } catch (err) {
       console.error('Error fetching inventory:', err);
-      error = 'Failed to load inventory for threshold management.';
+      error = err.message || 'Failed to load inventory for threshold management.';
     } finally {
       loading = false;
       renderPage(); // Re-render with data or error
